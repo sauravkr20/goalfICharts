@@ -1,6 +1,6 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Line } from "react-chartjs-2";
+import PropTypes from "prop-types";
 import {
 	Chart as ChartJS,
 	CategoryScale,
@@ -22,25 +22,25 @@ ChartJS.register(
 	Legend
 );
 
-const PortfolioChart = ({ data }) => {
+const PortfolioChart = ({ data, portfolio }) => {
+	// If portfolio or portfolio.indexes is undefined, return null to avoid crashes
+	if (!portfolio || !portfolio.indexes) {
+		return <div>No portfolio data available</div>;
+	}
+
 	const chartData = {
 		labels: data.map((item) => item.date),
-		datasets: [
-			{
-				label: "Alpha Blend – Market Leaders",
-				data: data.map((item) => item.alphaBlend),
-				borderColor: "rgba(75, 192, 192, 1)",
-				backgroundColor: "rgba(75, 192, 192, 0.2)",
-				fill: true,
-			},
-			{
-				label: "NIFTY Smallcap 100",
-				data: data.map((item) => item.niftySmallcap),
-				borderColor: "rgba(153, 102, 255, 1)",
-				backgroundColor: "rgba(153, 102, 255, 0.2)",
-				fill: true,
-			},
-		],
+		datasets: Object.keys(portfolio.indexes).map((key, index) => ({
+			label: portfolio.indexes[key],
+			data: data.map((item) => item[key]),
+			borderColor:
+				index % 2 === 0 ? "rgba(75, 192, 192, 1)" : "rgba(153, 102, 255, 1)",
+			backgroundColor:
+				index % 2 === 0
+					? "rgba(75, 192, 192, 0.2)"
+					: "rgba(153, 102, 255, 0.2)",
+			fill: true,
+		})),
 	};
 
 	const chartOptions = {
@@ -59,15 +59,17 @@ const PortfolioChart = ({ data }) => {
 	return <Line data={chartData} options={chartOptions} />;
 };
 
-// PropTypes validation
+// Add PropTypes validation
 PortfolioChart.propTypes = {
 	data: PropTypes.arrayOf(
 		PropTypes.shape({
 			date: PropTypes.string.isRequired,
-			alphaBlend: PropTypes.number.isRequired,
-			niftySmallcap: PropTypes.number.isRequired,
+			// Other keys depend on the portfolio indexes
 		})
 	).isRequired,
+	portfolio: PropTypes.shape({
+		indexes: PropTypes.objectOf(PropTypes.string).isRequired,
+	}).isRequired,
 };
 
 export default PortfolioChart;
